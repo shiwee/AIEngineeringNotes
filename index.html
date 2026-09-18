@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Engineering Notes</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg:        #fafaf8;
+      --color-surface:   #ffffff;
+      --color-primary:   #1a56db;
+      --color-primary-d: #1444b8;
+      --color-text:      #1c1c1e;
+      --color-muted:     #6b7280;
+      --color-border:    #e5e7eb;
+      --color-accent:    #f0f4ff;
+      --color-tag-bg:    #eff6ff;
+      --color-tag-fg:    #1d4ed8;
+      --color-code-bg:   #f3f4f6;
+      --max-w:           70ch;
+      --radius:          0.5rem;
+      --font-body: "Georgia", "Times New Roman", serif;
+      --font-ui:   system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    html { font-size: 18px; scroll-behavior: smooth; }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      line-height: 1.75;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .site-header {
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .site-header__inner {
+      max-width: 64rem;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .site-header__logo {
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .site-header__logo .icon { font-size: 1.25rem; }
+
+    nav { display: flex; gap: 1.5rem; }
+
+    nav a {
+      font-family: var(--font-ui);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    nav a:hover { color: var(--color-primary); }
+
+    main {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 3rem 2rem 6rem;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 4rem 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .hero__eyebrow {
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      margin-bottom: 1rem;
+    }
+
+    .hero__title {
+      font-family: var(--font-ui);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--color-text);
+      margin-bottom: 1rem;
+    }
+
+    .hero__subtitle {
+      font-size: 1.1rem;
+      color: var(--color-muted);
+      max-width: 52ch;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    .hero__actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .btn {
+      font-family: var(--font-ui);
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 0.6rem 1.25rem;
+      border-radius: var(--radius);
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+
+    .btn--primary {
+      background: var(--color-primary);
+      color: #fff;
+    }
+    .btn--primary:hover { background: var(--color-primary-d); box-shadow: 0 2px 8px rgba(29,86,219,.3); }
+
+    .btn--outline {
+      background: transparent;
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+    }
+    .btn--outline:hover { background: var(--color-surface); border-color: #cbd5e1; }
+
+    /* ── Section headings ─────────────────────────────────── */
+    .section-label {
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Topic grid ───────────────────────────────────────── */
+    .topic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 4rem;
+    }
+
+    .topic-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .topic-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,.07);
+      border-color: #c7d2fe;
+    }
+
+    .topic-card__icon {
+      font-size: 1.75rem;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .topic-card__title {
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 0.5rem;
+    }
+
+    .topic-card__desc {
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .tag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+    .tag {
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--color-tag-bg);
+      color: var(--color-tag-fg);
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+    }
+
+    /* ── Notes / articles ─────────────────────────────────── */
+    .note-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 4rem;
+    }
+
+    .note-item {
+      border-bottom: 1px solid var(--color-border);
+      padding: 1.25rem 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .note-item:first-child { border-top: 1px solid var(--color-border); }
+
+    .note-item__title {
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 0.3rem;
+    }
+
+    .note-item__excerpt {
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      line-height: 1.55;
+    }
+
+    .note-item__meta {
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      color: var(--color-muted);
+      white-space: nowrap;
+      padding-top: 0.25rem;
+    }
+
+    /* ── Reading-time highlight banner ───────────────────── */
+    .callout {
+      background: var(--color-accent);
+      border: 1px solid #c7d2fe;
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 4rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .callout__icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+    .callout__body { font-size: 0.95rem; color: var(--color-text); }
+
+    .callout__body strong { font-family: var(--font-ui); }
+
+    /* ── Principles section ───────────────────────────────── */
+    .principles {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .principles h2 {
+      font-family: var(--font-ui);
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+    }
+
+    .principles ol {
+      list-style: none;
+      counter-reset: steps;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .principles ol li {
+      counter-increment: steps;
+      display: grid;
+      grid-template-columns: 2rem 1fr;
+      gap: 0.75rem;
+      align-items: start;
+      font-size: 0.95rem;
+    }
+
+    .principles ol li::before {
+      content: counter(steps);
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      background: var(--color-tag-bg);
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.1rem;
+      flex-shrink: 0;
+    }
+
+    .principles ol li strong { font-family: var(--font-ui); }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    footer {
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border);
+      text-align: center;
+      padding: 2rem;
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      color: var(--color-muted);
+    }
+
+    footer a { color: var(--color-primary); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Accessibility & focus ────────────────────────────── */
+    :focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 3px;
+      border-radius: 2px;
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 640px) {
+      main { padding: 2rem 1rem 4rem; }
+      .hero { padding: 2.5rem 0; }
+      .note-item { grid-template-columns: 1fr; }
+      .note-item__meta { display: none; }
+      nav { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href="#" class="site-header__logo">
+      <span class="icon">🤖</span>
+      AI Engineering Notes
+    </a>
+    <nav>
+      <a href="#topics">Topics</a>
+      <a href="#notes">Notes</a>
+      <a href="#principles">Principles</a>
+      <a href="https://github.com/shiwee/AIEngineeringNotes" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Hero -->
+  <section class="hero">
+    <p class="hero__eyebrow">Open Knowledge Base</p>
+    <h1 class="hero__title">AI Engineering Notes</h1>
+    <p class="hero__subtitle">
+      Practical, concise notes on engineering in AI adoption — from
+      architecture patterns and prompt engineering to evaluation, deployment,
+      and production reliability.
+    </p>
+    <div class="hero__actions">
+      <a href="#topics" class="btn btn--primary">Browse Topics</a>
+      <a href="https://github.com/shiwee/AIEngineeringNotes" class="btn btn--outline" target="_blank" rel="noopener">View on GitHub</a>
+    </div>
+  </section>
+
+  <!-- Callout -->
+  <div class="callout">
+    <span class="callout__icon">💡</span>
+    <p class="callout__body">
+      <strong>What is AI Engineering?</strong> AI engineering bridges the gap between
+      raw AI research and production software. It covers how to select, integrate,
+      evaluate, and operate AI systems reliably at scale.
+    </p>
+  </div>
+
+  <!-- Topics -->
+  <section id="topics">
+    <p class="section-label">Topics</p>
+    <div class="topic-grid">
+
+      <article class="topic-card">
+        <span class="topic-card__icon">🏗️</span>
+        <h2 class="topic-card__title">System Architecture</h2>
+        <p class="topic-card__desc">
+          Patterns for integrating large language models into production
+          systems — RAG, agents, pipelines, and orchestration.
+        </p>
+        <div class="tag-list">
+          <span class="tag">RAG</span>
+          <span class="tag">Agents</span>
+          <span class="tag">Pipelines</span>
+        </div>
+      </article>
+
+      <article class="topic-card">
+        <span class="topic-card__icon">✍️</span>
+        <h2 class="topic-card__title">Prompt Engineering</h2>
+        <p class="topic-card__desc">
+          Techniques for writing reliable prompts: few-shot examples,
+          chain-of-thought, structured outputs, and prompt versioning.
+        </p>
+        <div class="tag-list">
+          <span class="tag">Chain-of-Thought</span>
+          <span class="tag">Few-Shot</span>
+          <span class="tag">Structured Output</span>
+        </div>
+      </article>
+
+      <article class="topic-card">
+        <span class="topic-card__icon">📊</span>
+        <h2 class="topic-card__title">Evaluation</h2>
+        <p class="topic-card__desc">
+          How to measure quality, safety, and regression risk in AI
+          features — from unit evals to LLM-as-judge and red-teaming.
+        </p>
+        <div class="tag-list">
+          <span class="tag">LLM-as-Judge</span>
+          <span class="tag">Benchmarks</span>
+          <span class="tag">Red-Teaming</span>
+        </div>
+      </article>
+
+      <article class="topic-card">
+        <span class="topic-card__icon">🚀</span>
+        <h2 class="topic-card__title">Deployment</h2>
+        <p class="topic-card__desc">
+          Serving models at scale: inference optimization, latency budgets,
+          streaming, batching, and cost management.
+        </p>
+        <div class="tag-list">
+          <span class="tag">Streaming</span>
+          <span class="tag">Batching</span>
+          <span class="tag">Cost</span>
+        </div>
+      </article>
+
+      <article class="topic-card">
+        <span class="topic-card__icon">🔒</span>
+        <h2 class="topic-card__title">Safety &amp; Guardrails</h2>
+        <p class="topic-card__desc">
+          Keeping AI features safe and aligned: content moderation,
+          output validation, input sanitization, and rate limiting.
+        </p>
+        <div class="tag-list">
+          <span class="tag">Content Policy</span>
+          <span class="tag">Validation</span>
+          <span class="tag">Rate Limiting</span>
+        </div>
+      </article>
+
+      <article class="topic-card">
+        <span class="topic-card__icon">🔍</span>
+        <h2 class="topic-card__title">Observability</h2>
+        <p class="topic-card__desc">
+          Tracing, logging, and monitoring AI systems in production —
+          token usage, latency percentiles, and quality dashboards.
+        </p>
+        <div class="tag-list">
+          <span class="tag">Tracing</span>
+          <span class="tag">Metrics</span>
+          <span class="tag">Logging</span>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Notes list -->
+  <section id="notes">
+    <p class="section-label">Latest Notes</p>
+    <div class="note-list">
+
+      <div class="note-item">
+        <div>
+          <p class="note-item__title">Choosing between RAG and Fine-tuning</p>
+          <p class="note-item__excerpt">
+            When external, frequently-changing knowledge matters, RAG is usually
+            the right first choice. Fine-tuning shines for style, format, and
+            domain-specific reasoning that is stable over time.
+          </p>
+        </div>
+        <span class="note-item__meta">5 min read</span>
+      </div>
+
+      <div class="note-item">
+        <div>
+          <p class="note-item__title">Structured Outputs with JSON Schema</p>
+          <p class="note-item__excerpt">
+            Using constrained decoding or function-calling to get reliable JSON
+            from LLMs — eliminating brittle string parsing in downstream code.
+          </p>
+        </div>
+        <span class="note-item__meta">4 min read</span>
+      </div>
+
+      <div class="note-item">
+        <div>
+          <p class="note-item__title">Token Budget Management</p>
+          <p class="note-item__excerpt">
+            Practical strategies for keeping prompt and completion token counts
+            predictable: dynamic context truncation, summarisation, and caching.
+          </p>
+        </div>
+        <span class="note-item__meta">6 min read</span>
+      </div>
+
+      <div class="note-item">
+        <div>
+          <p class="note-item__title">LLM-as-Judge: Pitfalls and Best Practices</p>
+          <p class="note-item__excerpt">
+            Using a stronger model to evaluate a weaker model's outputs is
+            powerful but comes with systematic biases. Learn how to calibrate
+            and validate your automated evaluators.
+          </p>
+        </div>
+        <span class="note-item__meta">7 min read</span>
+      </div>
+
+      <div class="note-item">
+        <div>
+          <p class="note-item__title">Agentic Loop Reliability</p>
+          <p class="note-item__excerpt">
+            Patterns for making multi-step agents more reliable: timeouts,
+            retry budgets, human-in-the-loop checkpoints, and idempotent tools.
+          </p>
+        </div>
+        <span class="note-item__meta">8 min read</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Principles -->
+  <section id="principles">
+    <div class="principles">
+      <h2>Engineering Principles for AI Adoption</h2>
+      <ol>
+        <li>
+          <div>
+            <strong>Start with evals.</strong> Define measurable success criteria
+            before writing a single prompt. Evals catch regressions and guide
+            iteration far better than human intuition alone.
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Treat prompts as code.</strong> Version-control them, review
+            them, and test changes in CI. A prompt change can be as breaking as a
+            code change.
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Design for graceful degradation.</strong> AI components will
+            fail, hallucinate, or time out. Build fallback paths so users still
+            get a useful experience.
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Observe everything.</strong> Log inputs, outputs, latency, and
+            token usage from day one. You cannot improve what you cannot measure.
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Keep humans in the loop for high-stakes decisions.</strong>
+            Automate the routine; flag the uncertain. Confidence scores and
+            human-review queues are not signs of weakness — they are good
+            engineering.
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Footer ───────────────────────────────────────────────── -->
+<footer>
+  <p>
+    AI Engineering Notes ·
+    <a href="https://github.com/shiwee/AIEngineeringNotes" target="_blank" rel="noopener">GitHub</a>
+    · Licensed under
+    <a href="https://github.com/shiwee/AIEngineeringNotes/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
+  </p>
+</footer>
+
+</body>
+</html>
