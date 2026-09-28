@@ -152,7 +152,7 @@ An AI capability should be assigned a level based on observable behavior, not on
 | **L4** | AI pursues a user-defined objective through iterative planning, execution, observation, and adaptation within defined constraints. |
 | **L5** | AI identifies statistically meaningful capability gaps from approved, anonymized signals, checks the approved capability catalog for composition opportunities, and produces evidence-backed proposals for human disposition. |
 
-These criteria apply per capability or business scenario. A product may contain L1, L2, L3, and L4 scenarios at the same time.
+These criteria are used to assess the AI engagement of a product, based on the behavior its supported AI experience provides. Evidence is gathered from representative capabilities, workflows, and user journeys; those underlying operations do not each receive an independent maturity label. If a product exposes materially different AI modes, describe its product-level engagement profile (for example, grounded knowledge alongside guided action) rather than forcing a single scalar to hide that variation.
 
 ---
 

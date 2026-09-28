@@ -12,7 +12,7 @@ This is a technology-neutral logical design. It does not select a model, agent f
 
 ## 2. Design Rules
 
-1. Assess engagement level per capability or scenario, not for a whole product.
+1. Assess AI engagement at the product level. Use the product's supported AI experience and its constituent capabilities/workflows as evidence; do not assign a maturity label to each API or workflow independently. If a product exposes materially different AI engagement modes, describe its product-level engagement profile rather than forcing those modes into one misleading scalar.
 2. Treat engagement and authority as separate dimensions. A level never grants permission by itself.
 3. Keep business rules, calculations, validation, and state changes in authoritative platform capabilities.
 4. Use deterministic workflows for known paths. Use dynamic reasoning where ambiguity or investigation adds value.
@@ -251,7 +251,126 @@ L5 must not generate code, scripts, API definitions, or other implementation ass
 * Proposals are routed for human disposition; AI cannot accept its own proposal or alter production capability state.
 * No path exists from L5 to code generation, schema/state/registry modification, or deployment execution.
 
-## 10. Level and Dependency Map
+## 10. Agent-Oriented Implementation Architecture
+
+### 10.1 Request Routing Model
+
+The AI layer should not be a single monolithic "agent box". The system should use a deterministic request router at the platform boundary that classifies incoming requests before any reasoning is attempted.
+
+| Request class | Typical example | Routing behavior | Allowed capability level |
+| --- | --- | --- | --- |
+| Traditional platform request | Query a report, create a project, run a calculation, fetch project metadata | Route directly to existing API or workflow adapter; no model reasoning required | L2 or below |
+| Grounded knowledge request | "Explain the current project status" or "What permissions apply to this device model?" | Retrieve authorized evidence, then answer with evidence provenance | L1 |
+| Investigative reasoning request | "Why are these results inconsistent? What is the likely root cause?" | Use evidence retrieval + reasoning + recommendation; no implicit execution | L3 |
+| Goal-driven execution request | "Update this project to meet the compliance target" | Start a goal session with explicit constraints, policy checks, and completion criteria | L4 |
+| Monitoring and proposal request | "What recurring workflow gaps are visible in the approved signals?" | Run L5 analysis on approved anonymized signals and emit proposal only | L5 |
+| Ambiguous or mixed-intent request | "Check this and then do the needed fix" | Split the intent into analysis and action phases; require policy and user approval before any state change | L3/L4 |
+
+Recommended routing rules:
+
+* Route to native platform APIs or deterministic workflows first when the request matches a known business operation.
+* Use AI only when the request requires interpretation, synthesis, investigation, planning, personalization, or flexible response composition.
+* Preserve a clear separation between a traditional API request and an agentic request even if they share the same UI flow.
+* Require policy evaluation before any material write or destructive action, regardless of whether the request originates from deterministic routing or reasoning.
+
+### 10.2 UI and AI Entry Pattern
+
+The UI should not directly decide which AI level is active. The UI sends a request into an authenticated AI entry/orchestration layer that attaches identity, tenant, resource, and session metadata. That layer then decides the route.
+
+The preferred pattern is:
+
+1. User submits a request from the product UI.
+2. The platform authenticates the session and resolves the current tenant/resource boundary.
+3. The AI entry layer classifies the requested action type and required level.
+4. The router either:
+   - invokes a deterministic workflow adapter, or
+   - invokes a retrieval/reasoning/planning path, or
+   - starts a goal-pursuit session.
+5. The result is returned to the UI with explicit mode labeling: answer, recommendation, execution status, approval request, or proposal.
+
+This pattern enables agentification of an existing traditional tool without creating hidden authority or silently bypassing established product logic.
+
+### 10.3 Session Model and State Separation
+
+A platform should maintain at least two session types and keep them structurally separate.
+
+| Session type | Purpose | State kept | Typical lifetime |
+| --- | --- | --- | --- |
+| Conversational session | Question-answer, synthesis, light follow-up | Message history, tenant/resource context, temporary retrieval context, unresolved questions | Short-lived, re-entry friendly |
+| Goal execution session | Bounded objective with policy, steps, plans, approvals, and outcome checks | Goal definition, plan version, action history, approvals, stop conditions, evidence, completion status | Long-lived, resumable |
+
+Recommended state design:
+
+* Conversation state is ephemeral and optimized for user experience. It should not become the sole source of authorization or execution memory.
+* Goal state is durable, auditable, and versioned. It should contain the objective, boundaries, delegated action classes, plan steps, evidence, and approval records.
+* For L4, maintain separate object state for: goal contract, current plan, step history, policy decisions, and completion evidence.
+* Treat message history as a presentation layer, not as the authoritative source of execution facts.
+* Every L4 session should retain a correlation to the user, tenant, resource, plan, capability invocation, and outcome.
+
+### 10.4 Knowledge Retrieval and Vectorization Strategy
+
+Retrieval is not a separate "AI layer" that competes with product APIs. It is a grounding capability that serves L1, L3, and L4 with evidence. A strong retrieval design uses metadata-aware indexing and policy filters rather than relying on a single flat vector index.
+
+Recommended architecture:
+
+* Maintain a structured knowledge layer for authoritative platform objects: project metadata, permissions, workflow definitions, document repositories, known issues, and approved domain documentation.
+* Create a searchable knowledge index that stores chunk-level content with metadata such as tenant scope, project scope, resource type, source owner, freshness, compliance classification, and document version.
+* Use hybrid retrieval: keyword or lexical retrieval for exact names, metadata filters for scope, and vector retrieval for semantic similarity.
+* Segment content at meaningful boundaries: section, procedure, workflow, policy, and known limitation, not arbitrarily long blocks.
+* Store retrieval evidence with provenance; do not allow the model to answer from unindexed or unscoped content.
+* Add a refresh strategy for stale content, policy updates, and document revalidation.
+
+Recommended vector metadata model:
+
+* entity_type
+* tenant_scope
+* project_scope
+* resource_id
+* source_system
+* document_version
+* freshness_ts
+* access_classification
+* approval_status
+* last_indexed_ts
+* owner
+
+This ensures retrieval can enforce both semantic relevance and security constraints. A vector search without tenant/resource filtering is not acceptable.
+
+### 10.5 Retrieval and Reasoning Flow by Level
+
+| Level | Min build | Main information path | AI role |
+| --- | --- | --- | --- |
+| L1 | Question handler, scoped retrieval connectors, answer composer, provenance renderer | Structured data + approved knowledge retrieval | Summarize and explain grounded facts |
+| L2 | Capability catalog, workflow adapter, validation layer | Existing platform APIs and workflows | Interpret intent and parameterize known actions |
+| L3 | Investigation planner, evidence ledger, recommendation composer | L1 retrieval + catalog read/search + policy-filtered capability lookup | Evaluate evidence, uncertainty, and options |
+| L4 | Goal controller, execution coordinator, progress/verifier | L3 reasoning + controlled workflow execution + evidence checks | Pursue user objective under explicit constraints |
+| L5 | Signal minimizer, anonymization filter, pattern analyzer, proposal generator | Approved anonymized signals + catalog metadata | Detect gaps and produce human-reviewable proposals |
+
+L1 should still be grounded even if the product is not yet ready for L3 or L4. The absence of a full reasoning stack does not mean the product cannot provide useful knowledge support.
+
+### 10.6 Must / Preferred / Exception Model
+
+Use the following decision model to keep the architecture practical and governable:
+
+| Category | Rule |
+| --- | --- |
+| Must | Identity and tenant enforcement; policy checks before material actions; evidence provenance; audit correlation; human approval for destructive or high-risk operations; no direct path from L5 to code generation, schema change, or deployment |
+| Preferred | Single AI orchestration boundary; deterministic-first routing; hybrid retrieval; durable L4 goal state; explicit mode labeling in the UX; request splitting for mixed-intent interactions |
+| Exception | Multi-agent decomposition, custom orchestration patterns, or specialized reasoning services only when the added complexity is justified by clear risk, latency, or ownership constraints |
+
+This keeps architecture simple by default while allowing escalation when justified.
+
+### 10.7 Build Guidance by Engagement Level
+
+* L1: Build the trust layer first. The product must be able to answer a narrow, high-value question with evidence and tenant/resource limits. This is the minimum viable helpful AI layer.
+* L2: Register the first useful workflows in the capability catalog and route them deterministically. This gives the product safe actionability without dynamic strategy selection.
+* L3: Add a reasoning layer only after grounded retrieval and catalog policy are reliable. At this stage, the model may generate recommendations but must not execute them implicitly.
+* L4: Enable goal-pursuit only for bounded objectives with explicit stop conditions, delegations, and user override. Keep the execution loop auditable and stoppable.
+* L5: Build only after signal governance and privacy controls are in place. The design should generate analysis and proposals, not implementation or production modification.
+
+This is the recommended sequencing for a product that is already strong in traditional platform capabilities: first ground the product, then automate the known workflow, then reason, then pursue bounded goals, and only last perform governance-oriented capability analysis.
+
+## 11. Level and Dependency Map
 
 | Level | Scenario responsibility | Reused foundations | Additional capability | Completion boundary |
 | --- | --- | --- | --- | --- |
@@ -261,9 +380,9 @@ L5 must not generate code, scripts, API definitions, or other implementation ass
 | L4 Autonomy | Bounded goal pursuit | L3 reasoning; L2 execution; policy, approval, audit, interaction | Goal contract, controller, budgets, stop/verify loop | Goal verified, safely stopped, or escalated |
 | L5 Evolution | Governed capability-gap proposal | Catalog metadata; approved signals; observability; governance workflow | Anonymized aggregation, gap analysis, composition matching, proposal | Human disposition; no AI implementation or platform mutation |
 
-This table describes dependency reuse, not a compulsory release sequence. L5 can be developed after its signal governance and catalog inputs are reliable even if unrelated product scenarios remain at L1 or L2.
+This table describes dependency reuse, not a compulsory release sequence or a per-workflow maturity classification. Assess the product's supported AI engagement level/profile using evidence from representative workflows, capabilities, and user journeys. A product may combine lower-level assistance with a higher-level agent experience; document the product-level profile and the evidence behind it rather than labeling every underlying API or individual scenario. L5 can be developed after its signal governance and catalog inputs are reliable even if other parts of the product remain at L1 or L2.
 
-## 11. Suggested Delivery Roadmap
+## 12. Suggested Delivery Roadmap
 
 ### Foundation: Establish Trust Boundaries
 
@@ -291,7 +410,7 @@ First approve signal schemas, anonymization, aggregation, significance criteria,
 
 Each increment may be selected based on business value and risk. Building an L4 scenario does not require every unrelated feature to reach L3, and L5 does not require autonomous implementation.
 
-## 12. Cross-Cutting Quality and Safety Requirements
+## 13. Cross-Cutting Quality and Safety Requirements
 
 * **Isolation:** prove tenant and resource separation across retrieval, caches, capability discovery, invocation, logs, and derived signals.
 * **Authorization:** enforce principal, tenant, resource, capability, action, and current-state policy at authoritative boundaries.
@@ -302,7 +421,7 @@ Each increment may be selected based on business value and risk. Building an L4 
 * **Human control:** make current mode and operation status visible; provide correction, approval, pause, cancel, and escalation paths as applicable.
 * **Change governance:** version capability contracts and policy; use established review, testing, rollout, monitoring, and rollback controls.
 
-## 13. Open Decisions and Owners
+## 14. Open Decisions and Owners
 
 The following details are deliberately not inferred by this logical design. Assign owners and record decisions before implementation requires them.
 
@@ -317,7 +436,7 @@ The following details are deliberately not inferred by this logical design. Assi
 | Evaluation datasets, quality thresholds, and release gates | Product, domain experts, AI quality, Security | Defines observable readiness at each level. |
 | Deployment topology, model/provider, retrieval technology, operational targets, and cost limits | System Architecture, SRE/Platform, Product | These are implementation decisions outside this technology-neutral design. |
 
-## 14. Definition of Ready by Level
+## 15. Definition of Ready by Level
 
 | Level | Minimum readiness evidence |
 | --- | --- |
@@ -327,6 +446,6 @@ The following details are deliberately not inferred by this logical design. Assi
 | L4 | Explicit goal contract, success and stop criteria, delegated action policy, per-action enforcement, budget, pause/cancel, audit correlation, and outcome verification. |
 | L5 | Approved signal inventory, privacy controls, aggregation method and thresholds, adequate catalog metadata, proposal schema, human governance owner, and proof that prohibited write/deploy paths are absent. |
 
-## 15. Conclusion
+## 16. Conclusion
 
 Build the engagement layer around existing authoritative capabilities. Establish shared identity, authorization, catalog, evidence, execution, and audit foundations, then add the level-specific behavior justified by each scenario. L1 grounds understanding; L2 executes known workflows; L3 dynamically investigates and recommends; L4 pursues a bounded, authorized goal; L5 identifies capability gaps and submits evidence-backed proposals for human decision and engineering.
