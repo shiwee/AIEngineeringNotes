@@ -296,7 +296,7 @@ The preferred candidate approach is:
 | **L4 Autonomy** | Pursue a defined objective through iterative control | Reasoning and Planning, Goal Controller, Execution Coordinator, Policy, Evidence | Goal is verified, execution stops, or the session escalates. |
 | **L5 Capability Evolution** | Identify and help address capability gaps | Evidence, Evolution Service, Catalog, Governance, controlled delivery process | Proposal is accepted, rejected, refined, or introduced through controlled governance. |
 
-The levels are assessed per capability or scenario. A single product may expose L1 reporting, L2 transactions, L3 investigation, L4 remediation, and L5 capability discovery simultaneously.
+The engagement level is assessed at the product's AI offering boundary, based on observable behavior across its supported user experience. Capability, workflow, and scenario evidence substantiates that product-level assessment; an underlying API or workflow is not independently assigned an engagement level. If a product exposes materially different AI modes, describe a product-level engagement profile that preserves those differences instead of collapsing them into a misleading scalar.
 
 ## 8. Critical Architectural Boundaries
 
